@@ -1,0 +1,105 @@
+---
+
+name: Semantic Release
+
+on:
+  push:
+    branches:
+     - main
+  workflow_call:
+
+jobs:
+  semanticrelease:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node env
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Install required node packages
+        run: |
+          npm install @semantic-release/git@10 --silent --no-progress --prefer-offline --no-audit
+          npm install conventional-changelog-conventionalcommits@5 --silent --no-progress --prefer-offline --no-audit
+          npm install semantic-release@19 --silent --no-progress --prefer-offline --no-audit
+
+      - name: Write release config
+        run: |
+          touch release.config.js
+          echo "'use strict'" >> release.config.js
+          echo "const { execSync } = require('node:child_process');" >> release.config.js
+          echo "module.exports = {" >> release.config.js
+          echo "branches: [" >> release.config.js
+          echo "'main'," >> release.config.js
+          echo "]," >> release.config.js
+          echo "preset: 'conventionalcommits'," >> release.config.js
+          echo "tagFormat: 'v\${version}'," >> release.config.js
+          echo "plugins: [" >> release.config.js
+          echo "[" >> release.config.js
+          echo "'@semantic-release/commit-analyzer'," >> release.config.js
+          echo "{" >> release.config.js
+          echo "releaseRules: [" >> release.config.js
+          echo "// Don't trigger a release. Even if it's a breaking change." >> release.config.js
+          echo "{ scope: 'no-release', release: false }," >> release.config.js
+          echo "// Activate breaking and revert behaviour. Default." >> release.config.js
+          echo "{ breaking: true, release: 'major' }," >> release.config.js
+          echo "{ revert: true, release: 'patch' }," >> release.config.js
+          echo "// Mapping of types to releases ignoring scopes." >> release.config.js
+          echo "{ type: 'feat', release: 'minor' }," >> release.config.js
+          echo "{ type: 'fix', release: 'patch' }," >> release.config.js
+          echo "{ type: 'perf', release: 'patch' }," >> release.config.js
+          echo "{ type: 'revert', release: 'patch' }," >> release.config.js
+          echo "{ type: 'refactor', release: 'patch' }," >> release.config.js
+          echo "{ type: 'test', release: 'patch' }," >> release.config.js
+          echo "// Mapping of types to releases including scopes." >> release.config.js
+          echo "{ type: 'docs', scope: 'readme', release: 'patch' }," >> release.config.js
+          echo "]," >> release.config.js
+          echo "}," >> release.config.js
+          echo "]," >> release.config.js
+          echo "[" >> release.config.js
+          echo "'@semantic-release/release-notes-generator'," >> release.config.js
+          echo "{" >> release.config.js
+          echo "preset: 'conventionalcommits'," >> release.config.js
+          echo "presetConfig: {" >> release.config.js
+          echo "types: [" >> release.config.js
+          echo "// Visible." >> release.config.js
+          echo "{ type: 'feat', section: 'Features', hidden: false }," >> release.config.js
+          echo "{ type: 'fix', section: 'Bug Fixes', hidden: false }," >> release.config.js
+          echo "{ type: 'perf', section: 'Performance', hidden: false }," >> release.config.js
+          echo "{ type: 'revert', section: 'Reverts', hidden: false }," >> release.config.js
+          echo "{ type: 'refactor', section: 'Refactor', hidden: false }," >> release.config.js
+          echo "{ type: 'test', section: 'Tests', hidden: false }," >> release.config.js
+          echo "{ type: 'docs', section: 'Docs', hidden: false }," >> release.config.js
+          echo "// Hidden." >> release.config.js
+          echo "{ type: 'style', section: 'Styles', hidden: true }," >> release.config.js
+          echo "{ type: 'chore', section: 'Chores', hidden: true }," >> release.config.js
+          echo "{ type: 'build', section: 'Build', hidden: true }," >> release.config.js
+          echo "{ type: 'ci', section: 'CI/CD', hidden: true }," >> release.config.js
+          echo "]," >> release.config.js
+          echo "}," >> release.config.js
+          echo "}," >> release.config.js
+          echo "]," >> release.config.js
+          echo "'@semantic-release/github'," >> release.config.js
+          echo "{" >> release.config.js
+          echo "success(pluginConfig, context) {" >> release.config.js
+          echo "const { options: { repositoryUrl }, nextRelease: { version }, logger } = context;" >> release.config.js
+          echo "const [major,minor] = version.split(\".\");" >> release.config.js
+          echo "logger.info(\`Pushing new version tag v\${major}.\${minor} to git.\`);" >> release.config.js
+          echo "execSync(\`git tag --force v\${major}\`);" >> release.config.js
+          echo "execSync(\`git tag --force v\${major}.\${minor}\`);" >> release.config.js
+          echo "execSync(\`git push \${context.options.repositoryUrl} --force --tags\`);" >> release.config.js
+          echo "}," >> release.config.js
+          echo "}," >> release.config.js
+          echo "]," >> release.config.js
+          echo "}" >> release.config.js
+
+      - name: Do semantic-release
+        id: semantic
+        run: npx --no-install semantic-release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
