@@ -84,7 +84,10 @@ jobs:
           echo "}," >> release.config.js
           echo "}," >> release.config.js
           echo "]," >> release.config.js
+          echo "[" >> release.config.js
           echo "'@semantic-release/github'," >> release.config.js
+          echo "{ sucessComment: false }," >> release.config.js 
+          echo "]," >> release.config.js
           echo "{" >> release.config.js
           echo "success(pluginConfig, context) {" >> release.config.js
           echo "const { options: { repositoryUrl }, nextRelease: { version }, logger } = context;" >> release.config.js
