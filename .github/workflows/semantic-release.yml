@@ -4,8 +4,6 @@ name: Semantic Release
 
 on:
   push:
-    branches:
-     - main
   workflow_call:
 
 jobs:
@@ -103,6 +101,6 @@ jobs:
 
       - name: Do semantic-release
         id: semantic
-        run: npx --no-install semantic-release
+        run: npx --no-install semantic-release --debug
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
