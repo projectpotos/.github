@@ -1,5 +1,5 @@
 # Potos
 
-Productivity for Developers, Engineers & Scientists
+Build and manage Enterprise Linux Clients with ease
 
 More informations on our [website](https://potos.dev)
